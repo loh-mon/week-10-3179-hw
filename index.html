@@ -24,8 +24,8 @@
   <script type="application/json" id="spec1">
   {
     "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-    "width": 500,
-    "height": 350,
+    "width": 1100,
+    "height": 420,
     "title": {"text": "Australia: Arrivals, Departures, Net Overseas Migration", "fontWeight": "bold"},
     "data": {"url": "https://raw.githubusercontent.com/loh-0/australian-migration/refs/heads/main/net_flow_migration.csv"},
     "params": [{"name": "yrSel", "value": 2023, "bind": {"input": "range", "min": 2004, "max": 2023, "step": 1, "name": "Year: "}}],
@@ -36,15 +36,17 @@
     "layer": [
       {"mark": {"type": "line", "strokeWidth": 2},
        "encoding": {
-         "x": {"field": "year", "type": "quantitative", "axis": {"format": "d", "title": "Year"}},
-         "y": {"field": "value", "type": "quantitative", "title": "People"},
-         "color": {"field": "Series", "scale": {"domain": ["Australian-born", "Overseas-born", "Total (net)"], "range": ["#4c78a8", "#f58518", "#54a24b"]}},
-         "tooltip": [{"field": "Series"}, {"field": "year"}, {"field": "value", "format": ","}]
+         "x": {"field": "year", "type": "quantitative", "axis": {"format": "d", "title": "Year", "tickMinStep": 1}},
+         "y": {"field": "value", "type": "quantitative", "title": "People", "axis": {"labelExpr": "format(datum.value, ',.0f')"}, "scale": {"nice": true, "domain": {"unionWith": [0]}}},
+         "color": {"field": "Series", "scale": {"domain": ["Australian-born", "Overseas-born", "Total (net)"], "range": ["#4c78a8", "#f58518", "#54a24b"]}, "legend": {"title": "Series", "orient": "top-left"}},
+         "tooltip": [{"field": "Series"}, {"field": "year", "title": "Year"}, {"field": "value", "title": "People", "format": ","}]
        }
       },
-      {"transform": [{"calculate": "yrSel", "as": "x"}], "mark": {"type": "rule", "stroke": "#666", "strokeDash": [4,4]}, "encoding": {"x": {"field": "x", "type": "quantitative"}}}
+      {"transform": [{"calculate": "yrSel", "as": "x"}], "mark": {"type": "rule", "stroke": "#666", "strokeDash": [4,4]}, "encoding": {"x": {"field": "x", "type": "quantitative"}}},
+      {"transform": [{"filter": "datum.year == yrSel"}], "mark": {"type": "point", "filled": true, "size": 80, "stroke": "white", "strokeWidth": 1}, "encoding": {"x": {"field": "year", "type": "quantitative"}, "y": {"field": "value", "type": "quantitative"}, "color": {"field": "Series", "legend": null}}},
+      {"data": {"url": "https://raw.githubusercontent.com/loh-0/australian-migration/refs/heads/main/net_flow_migration.csv"}, "transform": [{"filter": "datum.year == yrSel"}, {"calculate": "yrSel - 1", "as": "prevYear"}, {"lookup": "prevYear", "from": {"data": {"url": "https://raw.githubusercontent.com/loh-0/australian-migration/refs/heads/main/net_flow_migration.csv"}, "key": "year", "fields": ["australian_born", "overseas_born", "total"]}, "as": ["ab_prev", "ob_prev", "total_prev"]}, {"calculate": "isValid(datum.total_prev) ? datum.total - datum.total_prev : null", "as": "total_change"}, {"calculate": "isValid(datum.total_prev) && datum.total_prev != 0 ? (datum.total - datum.total_prev) / abs(datum.total_prev) : null", "as": "total_chg_pct"}, {"calculate": "isValid(datum.total_change) ? (datum.total_change > 0 ? '▲' : (datum.total_change < 0 ? '▼' : '•')) : ''", "as": "chg_arrow"}, {"calculate": "datum.total != 0 ? datum.overseas_born / datum.total : null", "as": "ob_share"}, {"calculate": "datum.total != 0 ? datum.australian_born / datum.total : null", "as": "ab_share"}, {"calculate": "'Total Migrations ' + format(datum.total, ',') + (isValid(datum.total_chg_pct) ? ' ' + datum.chg_arrow + ' ' + format(datum.total_chg_pct, '.0%') + ' vs ' + (yrSel - 1) : '') + ';Overseas-born ' + format(datum.overseas_born, ',') + (datum.total != 0 ? ' (' + format(datum.ob_share, '.0%') + ' of net)' : '') + ', Australian-born ' + format(datum.australian_born, ',') + (datum.total != 0 ? ' (' + format(datum.ab_share, '.0%') + ')' : '')", "as": "text_annotation_raw"}, {"calculate": "split(datum.text_annotation_raw, ';')", "as": "text_annotation"}], "mark": {"type": "text", "dy": -12, "fontSize": 11, "align": "center", "fill": "black"}, "encoding": {"x": {"field": "year", "type": "quantitative"}, "y": {"field": "total", "type": "quantitative"}, "text": {"field": "text_annotation"}}}
     ],
-    "config": {"background": "#f7fbff"}
+    "config": {"view": {"stroke": null}, "background": "#f7fbff", "axis": {"grid": true, "gridOpacity": 0.15, "tickSize": 0}}
   }
   </script>
 
