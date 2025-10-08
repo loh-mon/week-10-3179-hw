@@ -10,8 +10,8 @@
   <style>
     body {font-family: Arial, sans-serif; margin: 0; background: #f9fafb; color: #111;}
     h1 {text-align: center; padding: 16px;}
-    .container {display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px;}
-    .chart {flex: 1 1 500px; min-width: 480px; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 0 8px rgba(0,0,0,0.1);}
+    .container {max-width: 1100px; margin: 0 auto; padding: 16px;}
+    .chart {background: white; padding: 10px; border-radius: 8px; box-shadow: 0 0 8px rgba(0,0,0,0.1); margin-bottom: 20px;}
   </style>
 </head>
 <body>
@@ -20,11 +20,13 @@
     <div id="chart1" class="chart"></div>
     <div id="chart2" class="chart"></div>
   </div>
+    <div id="chart2" class="chart"></div>
+  </div>
 
   <script type="application/json" id="spec1">
   {
     "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-    "width": 1100,
+    "width": "container",
     "height": 420,
     "title": {"text": "Australia: Arrivals, Departures, Net Overseas Migration", "fontWeight": "bold"},
     "data": {"url": "https://raw.githubusercontent.com/loh-0/australian-migration/refs/heads/main/net_flow_migration.csv"},
@@ -53,7 +55,7 @@
   <script type="application/json" id="spec2">
   {
     "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-    "width": 500,
+    "width": "container",
     "height": 350,
     "title": "Visa Arrivals by Type (2004–2023)",
     "data": {"url": "https://raw.githubusercontent.com/loh-0/fit3179-week9-map/refs/heads/main/migration_visa.csv"},
