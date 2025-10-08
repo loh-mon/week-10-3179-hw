@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FIT3179 Week 10 – Interactive Visualisations</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+  <style>
+    :root { --bg: #0b0f17; --fg: #e9eef5; --muted: #94a3b8; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    header { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
+    h1 { font-size: 24px; margin: 0 0 6px; }
+    p.lead { margin: 0; color: var(--muted); }
+    main { max-width: 1100px; margin: 24px auto 64px; padding: 0 16px; display: grid; gap: 28px; }
+    .card { background: #111827; border-radius: 14px; padding: 18px; box-shadow: 0 2px 12px rgba(0,0,0,0.25); }
+    .title { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+    .title h2 { font-size: 18px; margin: 0; }
+    .subtitle { color: var(--muted); font-size: 14px; margin: 2px 0 0; }
+    figure { margin: 0; }
+    .chart { width: 100%; min-height: 360px; }
+    footer { max-width: 1100px; margin: 24px auto; padding: 0 16px 32px; color: var(--muted); font-size: 14px; }
+    a { color: #a5b4fc; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>FIT3179 Week 10 – Interactive Visualisations</h1>
+    <p class="lead">Two Vega-Lite charts for the homework page. Replace the inline specs with your own.</p>
+  </header>
+
+  <main style="display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:28px;max-width:1100px;margin:24px auto 64px;padding:0 16px;">
+    <section class="card">
+      <div class="title">
+        <h2>Net Overseas Migration</h2>
+        <span class="subtitle">Interactive line chart with slider, rule and text annotation</span>
+      </div>
+      <figure aria-label="Net Overseas Migration line chart with interactive filter">
+        <div id="chart1" class="chart"></div>
+      </figure>
+    </section>
+
+    <section class="card">
+      <div class="title">
+        <h2>Arrivals by Visa Type</h2>
+        <span class="subtitle">Stacked area chart with tooltips</span>
+      </div>
+      <figure aria-label="Stacked area chart of arrivals by visa type with interaction">
+        <div id="chart2" class="chart"></div>
+      </figure>
+    </section>
+  </main>
+
+  <footer>
+    <p>Built with Vega, Vega-Lite and vega-embed. For marking, ensure your tooltips, annotations and filter are working.</p>
+  </footer>
+
+  <script type="application/json" id="spec1">
+  {
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+    "width": 1100,
+    "height": 420,
+    "title": {"text": "Australia: Arrivals, Departures, Net Overseas Migration", "fontWeight": "bold"},
+    "data": {
+      "url": "https://raw.githubusercontent.com/loh-0/australian-migration/refs/heads/main/net_flow_migration.csv"
+    },
+
+    "params": [
+      {
+        "name": "yrSel",
+        "value": 2023,
+        "bind": {"input": "range", "min": 2004, "max": 2023, "step": 1, "name": "Year: "}
+      }
+    ],
+
+    "transform": [
+      {"fold": ["australian_born", "overseas_born", "total"], "as": ["series_key", "value"]},
+      {
+        "calculate": "datum.series_key === 'australian_born' ? 'Australian-born' : datum.series_key === 'overseas_born' ? 'Overseas-born' : 'Total (net)",
+        "as": "Series"
+      }
+    ],
+
+    "layer": [
+      {
+        "mark": {"type": "line", "strokeWidth": 2},
+        "encoding": {
+          "x": {"field": "year", "type": "quantitative", "axis": {"format": "d", "title": "year", "tickMinStep": 1}},
+          "y": {
+            "field": "value",
+            "type": "quantitative",
+            "title": "people",
+            "axis": {"labelExpr": "format(datum.value, ',.0f')"},
+            "scale": {"nice": true, "domain": {"unionWith": [0]}}
+          },
+          "color": {
+            "field": "Series",
+            "scale": {
+              "domain": ["Australian-born", "Overseas-born", "Total (net)"],
+              "range": ["#4c78a8", "#f58518", "#54a24b"]
+            },
+            "legend": {"title": "Series", "orient": "top-left"}
+          },
+          "tooltip": [
+            {"field": "Series"},
+            {"field": "year", "title": "Year"},
+            {"field": "value", "title": "People", "format": ","}
+          ]
+        }
+      },
+
+      {
+        "transform": [
+          {"filter": "datum.year == yrSel"},
+          {"aggregate": [{"op": "min", "field": "year", "as": "x"}]}
+        ],
+        "mark": {"type": "rule", "stroke": "#666", "strokeDash": [4,4]},
+        "encoding": {"x": {"field": "x", "type": "quantitative"}}
+      },
+
+      {
+        "transform": [{"filter": "datum.year == yrSel"}],
+        "mark": {"type": "point", "filled": true, "size": 80, "stroke": "white", "strokeWidth": 1},
+        "encoding": {
+          "x": {"field": "year", "type": "quantitative"},
+          "y": {"field": "value", "type": "quantitative"},
+          "color": {"field": "Series", "legend": null}
+        }
+      },
+
+      {
+        "data": {
+          "url": "https://raw.githubusercontent.com/loh-0/australian-migration/refs/heads/main/net_flow_migration.csv"
+        },
+        "transform": [
+          {"filter": "datum.year == yrSel"},
+          {"calculate": "yrSel - 1", "as": "prevYear"},
+          {
+            "lookup": "prevYear",
+            "from": {
+              "data": {"url": "https://raw.githubusercontent.com/loh-0/australian-migration/refs/heads/main/net_flow_migration.csv"},
+              "key": "year",
+              "fields": ["australian_born", "overseas_born", "total"]
+            },
+            "as": ["ab_prev", "ob_prev", "total_prev"]
+          },
+          {"calculate": "isValid(datum.total_prev) ? datum.total - datum.total_prev : null", "as": "total_change"},
+          {"calculate": "isValid(datum.total_prev) && datum.total_prev != 0 ? (datum.total - datum.total_prev) / abs(datum.total_prev) : null", "as": "total_chg_pct"},
+          {"calculate": "isValid(datum.total_change) ? (datum.total_change > 0 ? '▲' : (datum.total_change < 0 ? '▼' : '•')) : ''", "as": "chg_arrow"},
+          {"calculate": "datum.total != 0 ? datum.overseas_born / datum.total : null", "as": "ob_share"},
+          {"calculate": "datum.total != 0 ? datum.australian_born / datum.total : null", "as": "ab_share"},
+          {
+            "calculate": "'Total Migrations ' + format(datum.total, ',') + (isValid(datum.total_chg_pct) ? ' ' + datum.chg_arrow + ' ' + format(datum.total_chg_pct, '.0%') + ' vs ' + (yrSel - 1) : '') + ';Overseas-born ' + format(datum.overseas_born, ',') + (datum.total != 0 ? ' (' + format(datum.ob_share, '.0%') + ' of net)' : '') + ', Australian-born ' + format(datum.australian_born, ',') + (datum.total != 0 ? ' (' + format(datum.ab_share, '.0%') + ')' : '')",
+            "as": "text_annotation_raw"
+          },
+          {"calculate": "split(datum.text_annotation_raw, ';')", "as": "text_annotation"}
+        ],
+        "mark": {"type": "text", "dy": -12, "fontSize": 11, "align": "center", "fill": "black"},
+        "encoding": {
+          "x": {"field": "year", "type": "quantitative"},
+          "y": {"field": "total", "type": "quantitative"},
+          "text": {"field": "text_annotation"}
+        }
+      }
+    ],
+
+    "config": {
+      "view": {"stroke": null},
+      "background": "#f7fbff",
+      "axis": {"grid": true, "gridOpacity": 0.15, "tickSize": 0}
+    }
+  }
+  </script>
+
+  <script type="application/json" id="spec2">
+  {
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+    "width": 900,
+    "height": 450,
+    "title": "Visa Arrivals by Type (2004–2023)",
+    "data": {
+      "url": "https://raw.githubusercontent.com/loh-0/fit3179-week9-map/refs/heads/main/migration_visa.csv"
+    },
+    "mark": {
+      "type": "area",
+      "interpolate": "monotone"
+    },
+    "encoding": {
+      "x": {
+        "field": "Year",
+        "type": "quantitative",
+        "title": "Year",
+        "axis": {"format": "d", "tickCount": 10}
+      },
+      "y": {
+        "field": "Arrivals",
+        "type": "quantitative",
+        "title": "Number of Arrivals",
+        "axis": {"format": ","},
+        "stack": "zero"
+      },
+      "color": {
+        "field": "Visa Type",
+        "type": "nominal",
+        "title": "Visa Type"
+      },
+      "tooltip": [
+        {"field": "Visa Type", "title": "Visa Type"},
+        {"field": "Year", "type": "quantitative", "title": "Year", "format": "d"},
+        {"field": "Arrivals", "type": "quantitative", "title": "Arrivals", "format": ","}
+      ]
+    },
+    "config": {
+      "view": {"stroke": null},
+      "background": "#f7fbff"
+    }
+  }
+  </script>
+
+  <script>
+    function parseSpec(id) {
+      try { return JSON.parse(document.getElementById(id).textContent); } catch (e) { return null; }
+    }
+
+    const spec1 = parseSpec('spec1');
+    const spec2 = parseSpec('spec2');
+
+    const embedOpts = { actions: {export: true, source: false, compiled: false, editor: false}, tooltip: {}};
+
+    if (spec1) vegaEmbed('#chart1', spec1, embedOpts);
+    if (spec2) vegaEmbed('#chart2', spec2, embedOpts);
+  </script>
+</body>
+</html>
